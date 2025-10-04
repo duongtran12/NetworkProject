@@ -4,83 +4,82 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ClientGUI extends JFrame {
-    private JTextArea logArea;
-    private JTextField commandField;
-    private JButton sendButton;
-    private JLabel statusLabel;
-    private Client client;
+    private final JTextArea logArea;
+    private final JTextField commandField;
+    private final JButton sendButton;
+    private final JLabel statusLabel;
+    private final Client client;
+    
+
+    private String lastCommand = "";
+    
 
     public ClientGUI(Client client) {
         this.client = client;
         setTitle("FTP Chat Client");
-        setSize(700, 500);
+        setSize(700, 480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // ==== Header ====
+        // header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(new Color(45, 52, 54));
-        header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
+        header.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         JLabel titleLabel = new JLabel("FTP Chat Client");
         titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
-
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
         statusLabel = new JLabel("● Connected to server");
-        statusLabel.setForeground(new Color(0, 255, 0));
-        statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
+        statusLabel.setForeground(new Color(0, 200, 0));
         header.add(titleLabel, BorderLayout.WEST);
         header.add(statusLabel, BorderLayout.EAST);
 
-        // ==== Log area ====
+        // log area
         logArea = new JTextArea();
         logArea.setEditable(false);
-        logArea.setFont(new Font("Consolas", Font.PLAIN, 14));
+        logArea.setFont(new Font("Consolas", Font.PLAIN, 13));
         logArea.setBackground(Color.BLACK);
-        logArea.setForeground(Color.GREEN);
-        JScrollPane scrollPane = new JScrollPane(logArea);
+        logArea.setForeground(new Color(0, 255, 100));
+        JScrollPane scroll = new JScrollPane(logArea);
 
-        // ==== Input area ====
-        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
+        // input
+        JPanel input = new JPanel(new BorderLayout(6, 6));
         commandField = new JTextField();
-        commandField.setFont(new Font("Consolas", Font.PLAIN, 14));
-
         sendButton = new JButton("Send");
-        sendButton.setBackground(new Color(39, 174, 96));
-        sendButton.setForeground(Color.WHITE);
-        sendButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        sendButton.setFocusPainted(false);
+        input.add(commandField, BorderLayout.CENTER);
+        input.add(sendButton, BorderLayout.EAST);
 
-        // Action
         commandField.addActionListener(e -> sendCommandFromField());
         sendButton.addActionListener(e -> sendCommandFromField());
 
-        inputPanel.add(commandField, BorderLayout.CENTER);
-        inputPanel.add(sendButton, BorderLayout.EAST);
-
-        // ==== Layout tổng ====
-        setLayout(new BorderLayout(5, 5));
+        setLayout(new BorderLayout(6, 6));
         add(header, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-        add(inputPanel, BorderLayout.SOUTH);
+        add(scroll, BorderLayout.CENTER);
+        add(input, BorderLayout.SOUTH);
 
         setVisible(true);
     }
 
     private void sendCommandFromField() {
-        String command = commandField.getText().trim();
-        if (!command.isEmpty()) {
-            client.sendCommand(command);
+        String cmd = commandField.getText().trim();
+        if (!cmd.isEmpty()) {
+            setLastCommand(cmd);
+            client.sendCommand(cmd);
             commandField.setText("");
         }
     }
 
     public void appendLog(String message) {
-        logArea.append(message + "\n");
-        logArea.setCaretPosition(logArea.getDocument().getLength());
+        SwingUtilities.invokeLater(() -> {
+            logArea.append(message + "\n");
+            logArea.setCaretPosition(logArea.getDocument().getLength());
+        });
+    }
+
+    public void setLastCommand(String cmd) {
+        this.lastCommand = cmd;
+    }
+
+    public String getLastCommand() {
+        return lastCommand == null ? "" : lastCommand;
     }
 }
