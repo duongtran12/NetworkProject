@@ -2,65 +2,71 @@ package client;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 public class ClientGUI extends JFrame {
     private JTextArea logArea;
     private JTextField commandField;
-    private JButton uploadBtn, downloadBtn, listBtn, sendBtn, quitBtn;
-    private JList<String> fileList;
-    private DefaultListModel<String> listModel;
+    private JButton sendButton;
+    private JLabel statusLabel;
     private Client client;
 
     public ClientGUI(Client client) {
         this.client = client;
-        setTitle("Client GUI - FTP & Chat");
-        setSize(600, 400);
+        setTitle("FTP Chat Client");
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); 
-        setLayout(new BorderLayout(10, 10));
+        setLocationRelativeTo(null);
 
+        // ==== Header ====
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(45, 52, 54));
+        header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel titleLabel = new JLabel("FTP Chat Client");
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+
+        statusLabel = new JLabel("● Connected to server");
+        statusLabel.setForeground(new Color(0, 255, 0));
+        statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        header.add(titleLabel, BorderLayout.WEST);
+        header.add(statusLabel, BorderLayout.EAST);
+
+        // ==== Log area ====
         logArea = new JTextArea();
         logArea.setEditable(false);
-        logArea.setFont(new Font("Consolas", Font.PLAIN, 13));
+        logArea.setFont(new Font("Consolas", Font.PLAIN, 14));
+        logArea.setBackground(Color.BLACK);
+        logArea.setForeground(Color.GREEN);
         JScrollPane scrollPane = new JScrollPane(logArea);
 
-        JPanel commandPanel = new JPanel(new BorderLayout(5, 5));
+        // ==== Input area ====
+        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
         commandField = new JTextField();
-        sendBtn = new JButton("Gửi");
-        sendBtn.addActionListener(e -> sendCommandFromField());
-        commandPanel.add(commandField, BorderLayout.CENTER);
-        commandPanel.add(sendBtn, BorderLayout.EAST);
+        commandField.setFont(new Font("Consolas", Font.PLAIN, 14));
 
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        uploadBtn = new JButton("Upload");
-        downloadBtn = new JButton("Download");
-        listBtn = new JButton("List Files");
-        quitBtn = new JButton("Quit");
+        sendButton = new JButton("Send");
+        sendButton.setBackground(new Color(39, 174, 96));
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setFont(new Font("SansSerif", Font.BOLD, 14));
+        sendButton.setFocusPainted(false);
 
-        actionPanel.add(uploadBtn);
-        actionPanel.add(downloadBtn);
-        actionPanel.add(listBtn);
-        actionPanel.add(quitBtn);
+        // Action
+        commandField.addActionListener(e -> sendCommandFromField());
+        sendButton.addActionListener(e -> sendCommandFromField());
 
-        uploadBtn.addActionListener(e -> chooseAndUpload());
-        downloadBtn.addActionListener(e -> downloadSelectedFile());
-        listBtn.addActionListener(e -> client.sendCommand("LIST"));
-        quitBtn.addActionListener(e -> client.sendCommand("Q"));
+        inputPanel.add(commandField, BorderLayout.CENTER);
+        inputPanel.add(sendButton, BorderLayout.EAST);
 
-        listModel = new DefaultListModel<>();
-        fileList = new JList<>(listModel);
-        fileList.setFont(new Font("Arial", Font.PLAIN, 13));
-        JScrollPane listScroll = new JScrollPane(fileList);
-        listScroll.setPreferredSize(new Dimension(200, 0));
-
-        JSplitPane splitPane = new JSplitPane(
-                JSplitPane.HORIZONTAL_SPLIT, scrollPane, listScroll);
-        splitPane.setDividerLocation(380);
-
-        add(splitPane, BorderLayout.CENTER);
-        add(commandPanel, BorderLayout.SOUTH);
-        add(actionPanel, BorderLayout.NORTH);
+        // ==== Layout tổng ====
+        setLayout(new BorderLayout(5, 5));
+        add(header, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(inputPanel, BorderLayout.SOUTH);
 
         setVisible(true);
     }
@@ -73,40 +79,8 @@ public class ClientGUI extends JFrame {
         }
     }
 
-    private void chooseAndUpload() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File("./client_files"));
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            client.sendCommand("UPLOAD " + file.getName());
-        }
-    }
-
-    private void downloadSelectedFile() {
-        String selected = fileList.getSelectedValue();
-        if (selected != null) {
-            client.sendCommand("DOWNLOAD " + selected);
-        } else {
-            appendLog("Chưa chọn file để tải xuống!");
-        }
-    }
-
     public void appendLog(String message) {
         logArea.append(message + "\n");
         logArea.setCaretPosition(logArea.getDocument().getLength());
-
-        if (message.startsWith("Server:") && message.contains(",")) {
-            updateFileList(message.replace("Server:", "").trim());
-        }
-    }
-
-    private void updateFileList(String files) {
-        listModel.clear();
-        if (!files.equals("Không có file")) {
-            for (String f : files.split(",")) {
-                listModel.addElement(f.trim());
-            }
-        }
     }
 }
