@@ -13,7 +13,7 @@ public class UserDAO {
             stmt.setString(2, password);
 
             ResultSet rs = stmt.executeQuery();
-            return rs.next(); // true nếu tìm thấy user
+            return rs.next(); 
         } catch (Exception e) {
             e.printStackTrace();
             return false;
