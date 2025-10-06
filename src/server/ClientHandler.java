@@ -20,9 +20,8 @@ public class ClientHandler extends Thread {
             out.writeUTF("220 FTP Server Ready");
             out.flush();
 
-            gui.appendLog("Kết nối mới: " + socket.getInetAddress());
         } catch (IOException e) {
-            gui.appendLog("❌ Lỗi khởi tạo stream: " + e.getMessage());
+            gui.appendLog("Lỗi khởi tạo stream: " + e.getMessage());
             try {
                 socket.close();
             } catch (IOException ignored) {}
@@ -32,7 +31,7 @@ public class ClientHandler extends Thread {
     @Override
     public void run() {
         if (in == null || out == null) {
-            gui.appendLog("⚠️ Stream chưa sẵn sàng, kết nối bị đóng.");
+            gui.appendLog("Stream chưa sẵn sàng, kết nối bị đóng.");
             try { socket.close(); } catch (IOException ignored) {}
             return;
         }
@@ -40,7 +39,7 @@ public class ClientHandler extends Thread {
         try {
             while (true) {
                 String command = in.readUTF();
-                gui.appendLog("📩 Client gửi: " + command);
+                gui.appendLog("Client gửi: " + command);
 
                 String response = CommandHandler.handleCommand(command, socket, in, out, gui);
 
@@ -52,13 +51,13 @@ public class ClientHandler extends Thread {
                 }
 
                 if (response != null && response.startsWith("221")) {
-                    gui.appendLog("🔌 Client ngắt kết nối.");
+                    gui.appendLog("Client ngắt kết nối.");
                     try { socket.close(); } catch (IOException ignored) {}
                     break;
                 }
             }
         } catch (IOException e) {
-            gui.appendLog("❌ Client ngắt kết nối: " + e.getMessage());
+            gui.appendLog("Client ngắt kết nối: " + e.getMessage());
         } finally {
             try { socket.close(); } catch (IOException ignored) {}
         }

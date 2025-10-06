@@ -24,7 +24,7 @@ public class Client {
             controlSocket = new Socket(SERVER_ADDRESS, SERVER_PORT);
             in = new DataInputStream(controlSocket.getInputStream());
             out = new DataOutputStream(controlSocket.getOutputStream());
-            gui.appendLog("✅ Connected to server");
+            gui.appendLog("Connected to server");
 
             new Thread(() -> {
                 try {
@@ -52,7 +52,6 @@ public class Client {
                     currentUser = cmdParts[1].trim();
                     File userDir = new File("client_files/" + currentUser);
                     if (!userDir.exists()) userDir.mkdirs();
-                    gui.appendLog("📁 Đã tạo thư mục riêng cho client: " + currentUser);
                 }
             }
 

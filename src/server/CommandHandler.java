@@ -5,8 +5,10 @@ import java.net.*;
 
 public class CommandHandler {
     private static final String ROOT_DIR = "server_files/";
-    private static boolean isLoggedIn = false;
     private static String currentDir = ROOT_DIR;
+
+    private static ThreadLocal<Boolean> isLoggedIn = ThreadLocal.withInitial(() -> false);
+    private static ThreadLocal<String> currentUser = new ThreadLocal<>();
 
     public static String handleCommand(String command, Socket socket, DataInputStream in, DataOutputStream out, ServerGUI gui) {
         String[] parts = command.split(" ", 2);
@@ -15,35 +17,38 @@ public class CommandHandler {
 
         try {
             switch (cmd) {
-                case "S":
-                    if (arg != null) return "Server nhận: " + arg;
-                    return "Lỗi: Thiếu message.";
-
-                case "R":
-                    return "Server: Hello from server!";
-
-                case "Q":
-                    return "Goodbye! Kết nối đóng.";
-
                 case "USER":
                     if (arg == null) return "501 Missing username.";
-                    return "331 User name okay, need password.";
+                    currentUser.set(arg);
+                    return "331 User name okay, need password."; 
 
                 case "PASS":
-                    isLoggedIn = true;
-                    currentDir = ROOT_DIR;
-                    gui.appendLog("Người dùng đã đăng nhập.");
-                    return "230 User logged in, proceed.";
+                    if (currentUser.get() == null) return "503 Bad sequence of commands.";
+                    if (arg == null) return "501 Missing password.";
+
+                    boolean valid = UserDAO.checkLogin(currentUser.get(), arg);
+                    if (valid) {
+                        isLoggedIn.set(true);
+                        currentDir = ROOT_DIR;
+                        gui.appendLog("Người dùng '" + currentUser.get() + "' đã đăng nhập thành công.");
+                        return "230 User logged in, proceed.";
+                    } else {
+                        gui.appendLog("Đăng nhập thất bại cho user: " + currentUser.get());
+                        currentUser.remove();
+                        return "530 Login incorrect.";
+                    }
 
                 case "QUIT":
+                    isLoggedIn.set(false);
+                    currentUser.remove();
                     return "221 Goodbye.";
 
                 case "PWD":
-                    if (!isLoggedIn) return "530 Not logged in.";
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
                     return "257 \"" + currentDir + "\" is current directory.";
 
                 case "CWD":
-                    if (!isLoggedIn) return "530 Not logged in.";
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
                     if (arg == null) return "501 Missing directory.";
                     File newDir = new File(currentDir, arg);
                     if (newDir.exists() && newDir.isDirectory()) {
@@ -53,18 +58,18 @@ public class CommandHandler {
                     return "550 Directory not found.";
 
                 case "LIST":
-                    if (!isLoggedIn) return "530 Not logged in.";
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
                     openDataConnection(socket, out, gui, "LIST", null);
                     return "150 Opening data connection.";
 
                 case "STOR":
-                    if (!isLoggedIn) return "530 Not logged in.";
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
                     if (arg == null) return "501 Missing filename.";
                     openDataConnection(socket, out, gui, "STOR", arg);
                     return "150 Opening data connection.";
-                    
+
                 case "MKD":
-                    if (!isLoggedIn) return "530 Not logged in.";
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
                     if (arg == null) return "501 Missing directory name.";
                     File newFolder = new File(currentDir + "/" + arg);
                     if (newFolder.exists()) {
@@ -74,11 +79,10 @@ public class CommandHandler {
                         return "257 \"" + newFolder.getPath() + "\" directory created.";
                     } else {
                         return "550 Failed to create directory.";
-                }
-    
+                    }
 
                 case "RETR":
-                    if (!isLoggedIn) return "530 Not logged in.";
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
                     if (arg == null) return "501 Missing filename.";
                     openDataConnection(socket, out, gui, "RETR", arg);
                     return "150 Opening data connection.";
@@ -110,7 +114,7 @@ public class CommandHandler {
                     String list = FileManager.listFiles(currentDir);
                     dout.writeUTF(list);
                     dout.flush();
-                    gui.appendLog("Đã gửi danh sách file.");
+                    gui.appendLog("Đã gửi danh sách file cho client.");
 
                 } else if ("STOR".equals(mode)) {
                     DataInputStream din = new DataInputStream(dataSocket.getInputStream());
@@ -122,14 +126,14 @@ public class CommandHandler {
                     DataOutputStream dout = new DataOutputStream(dataSocket.getOutputStream());
                     File src = new File(currentDir + "/" + filename);
                     FileManager.sendFile(dout, src.getPath());
-                    gui.appendLog("Download thành công: " + src.getPath());
+                    gui.appendLog("⬇️ Download thành công: " + src.getPath());
                 }
 
                 out.writeUTF("226 Transfer complete");
                 out.flush();
 
             } catch (IOException e) {
-                gui.appendLog("⚠️ Lỗi data connection: " + e.getMessage());
+                gui.appendLog("Lỗi data connection: " + e.getMessage());
                 try {
                     out.writeUTF("425 Can't open data connection.");
                     out.flush();
