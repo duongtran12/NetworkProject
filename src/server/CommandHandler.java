@@ -17,6 +17,14 @@ public class CommandHandler {
 
         try {
             switch (cmd) {
+            	case "S":
+            		return (arg != null) ? "Server nhận: " + arg : "501 Missing message.";
+
+            	case "R":
+            		return "Server: Hello from server!";
+
+            	case "Q":
+            		
                 case "USER":
                     if (arg == null) return "501 Missing username.";
                     currentUser.set(arg);
@@ -79,6 +87,21 @@ public class CommandHandler {
                         return "257 \"" + newFolder.getPath() + "\" directory created.";
                     } else {
                         return "550 Failed to create directory.";
+                    }
+                    
+                case "DELE":
+                    if (!isLoggedIn.get()) return "530 Not logged in.";
+                    if (arg == null) return "501 Missing filename.";
+                    File fileToDelete = new File(currentDir + "/" + arg);
+                    if (fileToDelete.exists() && fileToDelete.isFile()) {
+                        if (fileToDelete.delete()) {
+                            gui.appendLog("Đã xóa file: " + fileToDelete.getName());
+                            return "250 File deleted successfully.";
+                        } else {
+                            return "450 File delete failed.";
+                        }
+                    } else {
+                        return "550 File not found.";
                     }
 
                 case "RETR":

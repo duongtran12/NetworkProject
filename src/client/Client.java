@@ -33,7 +33,7 @@ public class Client {
                         handleServerResponse(response);
                     }
                 } catch (IOException e) {
-                    gui.appendLog("❌ Disconnected: " + e.getMessage());
+                    gui.appendLog("Disconnected: " + e.getMessage());
                 }
             }).start();
 
@@ -66,7 +66,7 @@ public class Client {
                 }
             }
         } catch (Exception e) {
-            gui.appendLog("⚠️ Lỗi xử lý dữ liệu: " + e.getMessage());
+            gui.appendLog("Lỗi xử lý dữ liệu: " + e.getMessage());
         }
     }
 
@@ -74,21 +74,21 @@ public class Client {
         try (Socket dataSocket = new Socket(SERVER_ADDRESS, port);
              DataInputStream din = new DataInputStream(dataSocket.getInputStream())) {
             String list = din.readUTF();
-            gui.appendLog("📂 Danh sách file:\n" + list);
+            gui.appendLog("Danh sách file:\n" + list);
         }
-        gui.appendLog("✅ Transfer complete.");
+        gui.appendLog("Transfer complete.");
     }
 
     private void handleStor(int port, String command) throws IOException {
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
-            gui.appendLog("⚠️ Thiếu tên file để upload!");
+            gui.appendLog("Thiếu tên file để upload!");
             return;
         }
         String filename = parts[1].trim();
         File file = new File("client_files/" + currentUser + "/" + filename);
         if (!file.exists()) {
-            gui.appendLog("⚠️ File không tồn tại: " + file.getPath());
+            gui.appendLog("File không tồn tại: " + file.getPath());
             return;
         }
 
@@ -105,13 +105,13 @@ public class Client {
             dout.flush();
         }
 
-        gui.appendLog("✅ Uploaded: " + filename);
+        gui.appendLog("Uploaded: " + filename);
     }
 
     private void handleRetr(int port, String command) throws IOException {
         String[] parts = command.split(" ", 2);
         if (parts.length < 2) {
-            gui.appendLog("⚠️ Thiếu tên file để tải về!");
+            gui.appendLog("Thiếu tên file để tải về!");
             return;
         }
         String filename = parts[1].trim();
@@ -131,7 +131,7 @@ public class Client {
             fos.flush();
         }
 
-        gui.appendLog("✅ Downloaded: " + filename + " vào thư mục " + currentUser);
+        gui.appendLog("Downloaded: " + filename + " vào thư mục " + currentUser);
     }
 
     private int extractPort(String response) {

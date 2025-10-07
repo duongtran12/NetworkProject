@@ -28,5 +28,9 @@ public class Server {
             gui.appendLog("Lỗi server: " + e.getMessage());
         }
     }
+    
+    public static List<ClientHandler> getClientHandlers() {
+        return clients;
+    }
 
 }
