@@ -17,7 +17,8 @@ public class ClientHandler extends Thread {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
-            out.writeUTF("220 FTP Server Ready");
+            // Lời chào Việt hóa (mã 220 giữ nguyên)
+            out.writeUTF("220 Máy chủ FTP sẵn sàng.");
             out.flush();
 
         } catch (IOException e) {
@@ -38,20 +39,32 @@ public class ClientHandler extends Thread {
 
         try {
             while (true) {
+                // Nhận lệnh từ client
                 String command = in.readUTF();
-                gui.appendLog("Client gửi: " + command);
 
+                // Xử lý lệnh
                 String response = CommandHandler.handleCommand(command, socket, in, out, gui);
 
+                // Lấy tên user hiện tại để log
+                String username = CommandHandler.getCurrentUser();
+                String label = (username != null)
+                        ? "Người dùng '" + username + "'"
+                        : "Client chưa đăng nhập";
+
+                gui.appendLog(label + " gửi lệnh: " + command);
+
+                // Gửi phản hồi cho client + log lại
                 if (response != null && !response.isEmpty()) {
                     synchronized (out) {
                         out.writeUTF(response);
                         out.flush();
                     }
+                    gui.appendLog("Server trả cho " + label + ": " + response);
                 }
 
+                // Nếu là QUIT (221) thì đóng kết nối
                 if (response != null && response.startsWith("221")) {
-                    gui.appendLog("Client ngắt kết nối.");
+                    gui.appendLog(label + " đã ngắt kết nối.");
                     try { socket.close(); } catch (IOException ignored) {}
                     break;
                 }
